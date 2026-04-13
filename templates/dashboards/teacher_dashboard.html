@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root { --sidebar-bg: #111c44; --accent: #4318FF; }
+        body { background: #f4f7fe; font-family: 'DM Sans', sans-serif; overflow: hidden; }
+        .wrapper { display: grid; grid-template-columns: 280px 1fr; height: 100vh; }
+        .sidebar { background: var(--sidebar-bg); padding: 40px 20px; color: white; }
+        .nav-link { color: #8f9bba; font-weight: 700; padding: 15px; border-radius: 12px; cursor: pointer; display: block; text-decoration: none; margin-bottom: 10px; }
+        .nav-link.active, .nav-link:hover { background: rgba(255,255,255,0.1); color: white; }
+        .main-stage { padding: 40px; overflow-y: auto; }
+        .section-content { display: none; }
+        .section-content.active { display: block; }
+        .glass-card { 
+        background: white; 
+        padding: 25px; 
+        border-radius: 20px; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05); /* ✅ Changed 'shadow' to 'box-shadow' */
+}
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <aside class="sidebar">
+        <h3 class="fw-bold mb-5 ps-3">LearnUp Studio</h3>        <nav>
+            <div class="nav-link active" onclick="showSection('home')">🏠 Studio Home</div>
+            <div class="nav-link" onclick="showSection('content')">📁 My Content</div>
+            <div class="nav-link" onclick="showSection('analytics')">📈 Analytics</div>
+            <div class="nav-link" onclick="showSection('profile')">👤 Profile</div>
+            <hr class="opacity-25">
+            <a href="{% url 'logout' %}" class="nav-item text-danger text-decoration-none ps-3">🚪 Logout</a>
+        </nav>
+    </aside>
+
+    <main class="main-stage">
+        <div id="home" class="section-content active">
+            <div class="d-flex justify-content-between align-items-center mb-5">
+                <h2>Instructor Dashboard</h2>
+                <button class="btn btn-primary rounded-pill px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#uploadModal">+ Create New Course</button>
+            </div>
+            <div class="row g-4 mb-4">
+                <div class="col-md-4"><div class="glass-card text-center"><h3>{{ total_courses }}</h3><p class="text-muted mb-0">Courses</p></div></div>
+                <div class="col-md-4"><div class="glass-card text-center"><h3>{{ total_students }}</h3><p class="text-muted mb-0">Students</p></div></div>
+                <div class="col-md-4"><div class="glass-card text-center"><h3>4.9</h3><p class="text-muted mb-0">Rating</p></div></div>
+            </div>
+        </div>
+
+        <div id="content" class="section-content">
+            <h3 class="fw-bold mb-4">Course Management</h3>
+            <div class="glass-card">
+                <table class="table align-middle">
+                    <thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Action</th></tr></thead>
+                    <tbody>
+                        {% for course in my_courses %}
+                        <tr>
+                            <td><strong>{{ course.title }}</strong></td>
+                            <td>{{ course.get_category_display }}</td>
+                            <td>₹{{ course.price }}</td>
+                            <td><button class="btn btn-sm btn-light border rounded-pill">Manage Videos</button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="analytics" class="section-content">
+            <h3 class="fw-bold mb-4">Performance Insights</h3>
+            <div class="row">
+                <div class="col-md-8"><div class="glass-card"><canvas id="mainChart"></canvas></div></div>
+                <div class="col-md-4"><div class="glass-card"><canvas id="pieChart"></canvas></div></div>
+            </div>
+        </div>
+
+        <div id="profile" class="section-content">
+            <h3 class="fw-bold mb-4">Profile Settings</h3>
+            <div class="glass-card col-md-6">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="text-center mb-4">
+                        <img src="https://ui-avatars.com/api/?name={{ user.username }}" class="rounded-circle mb-3" width="100">
+                        <input type="file" name="profile_pic" class="form-control form-control-sm mt-2">
+                    </div>
+                    <div class="mb-3"><label class="small fw-bold">Display Name</label><input type="text" name="username" class="form-control" value="{{ user.username }}"></div>
+                    <button type="submit" name="update_profile" class="btn btn-primary w-100 rounded-pill fw-bold">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 p-4 shadow">
+            <h4 class="fw-bold mb-4">Publish New Course</h4>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3"><label class="fw-bold small">Course Title</label>{{ form.title }}</div>
+                <div class="row">
+                    <div class="col-6 mb-3"><label class="fw-bold small">Category</label>{{ form.category }}</div>
+                    <div class="col-6 mb-3"><label class="fw-bold small">Price (₹)</label>{{ form.price }}</div>
+                </div>
+                <div class="mb-3"><label class="fw-bold small">Course Description</label><textarea name="description" class="form-control" rows="3" placeholder="Tell students what they will learn..."></textarea></div>
+                <div class="mb-3"><label class="fw-bold small">Live Link (Optional)</label>{{ form.live_lecture_link }}</div>
+                <div class="mb-4"><label class="fw-bold small">Thumbnail Image</label>{{ form.thumbnail }}</div>
+                <button type="submit" name="create_course" class="btn btn-primary w-100 rounded-pill fw-bold py-2">Publish Course Now</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Sidebar Navigation Logic
+    function showSection(sectionId) {
+        document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        document.getElementById(sectionId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    // Charts Logic
+    new Chart(document.getElementById('mainChart'), { type: 'line', data: { labels: ['M','T','W','T','F'], datasets: [{ label: 'Watch Time', data: [12, 19, 3, 5, 2], borderColor: '#4318FF', tension: 0.4 }] } });
+    new Chart(document.getElementById('pieChart'), { type: 'doughnut', data: { labels: ['Tech', 'Non-Tech'], datasets: [{ data: [70, 30], backgroundColor: ['#4318FF', '#eef2ff'] }] } });
+</script>
+</body>
+</html>

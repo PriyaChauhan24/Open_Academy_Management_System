@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container py-5">
+
+<h2>{{ course.title }}</h2>
+
+<p>{{ course.description }}</p>
+
+<hr>
+
+<h4>Lecture Video</h4>
+
+{% if course.video_url %}
+
+<div class="ratio ratio-16x9">
+<iframe src="{{ course.video_url }}" allowfullscreen></iframe>
+</div>
+
+{% else %}
+
+<p>No video uploaded yet.</p>
+
+{% endif %}
+
+</div>
+
+{% endblock %}
