@@ -16,3 +16,7 @@ This is a Django-based Open Academy Management System to manage courses, student
 ## How to Run
 pip install -r requirements.txt
 python manage.py runserver
+
+## Setup Database
+python manage.py migrate
+python manage.py createsuperuser
